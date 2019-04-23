@@ -6,7 +6,7 @@ message("RELEASE_BUILD: ${RELEASE_BUILD}")
 
 # generic target
 set(CMAKE_SYSTEM_NAME Generic)
-project(Transport-Catalog-A C CXX)
+project(Transport-Catalog C CXX)
 
 # compiler bins location
 get_filename_component(C_COMPILER_PATH ${CMAKE_C_COMPILER} DIRECTORY)
