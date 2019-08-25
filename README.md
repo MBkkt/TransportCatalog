@@ -1,4 +1,4 @@
-# TransportCatalog
+# Transport Catalog
 Intelligent database for transport
 
 You can specify a database for buses.
