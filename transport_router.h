@@ -1,5 +1,3 @@
-#ifndef __TRANSPORT_ROUTER_H__
-#define __TRANSPORT_ROUTER_H__
 #pragma once
 
 #include "descriptions.h"
@@ -11,16 +9,15 @@
 #include <unordered_map>
 #include <vector>
 
-
 class TransportRouter {
-private:
+ private:
     using BusGraph = Graph::DirectedWeightedGraph<double>;
     using Router = Graph::Router<double>;
 
-public:
-    TransportRouter(Descriptions::StopsDict const & stops_dict,
-                    Descriptions::BusesDict const & buses_dict,
-                    Json::Dict const & routing_settings_json);
+ public:
+    TransportRouter(const Descriptions::StopsDict &stops_dict,
+                    const Descriptions::BusesDict &buses_dict,
+                    const Json::Dict &routing_settings_json);
 
     struct RouteInfo {
         double total_time;
@@ -39,20 +36,19 @@ public:
         std::vector<Item> items;
     };
 
-    std::optional<RouteInfo> findRoute(std::string const & stop_from, std::string const & stop_to) const;
+    std::optional<RouteInfo> FindRoute(const std::string &stop_from, const std::string &stop_to) const;
 
-private:
+ private:
     struct RoutingSettings {
-        int bus_wait_time;  // in minutes
+        int bus_wait_time;    // minutes
         double bus_velocity;  // km/h
+        explicit RoutingSettings(const Json::Dict &json);
     };
 
-    static RoutingSettings makeRoutingSettings(Json::Dict const & json);
+    void FillGraphWithStops(const Descriptions::StopsDict &stops_dict);
 
-    void fillGraphWithStops(Descriptions::StopsDict const & stops_dict);
-
-    void fillGraphWithBuses(Descriptions::StopsDict const & stops_dict,
-                            Descriptions::BusesDict const & buses_dict);
+    void FillGraphWithBuses(const Descriptions::StopsDict &stops_dict,
+                            const Descriptions::BusesDict &buses_dict);
 
     struct StopVertexIds {
         Graph::VertexId in;
@@ -70,12 +66,10 @@ private:
     };
     using EdgeInfo = std::variant<BusEdgeInfo, WaitEdgeInfo>;
 
-    std::unordered_map<std::string, StopVertexIds> stops_vertex_ids_;
     RoutingSettings routing_settings_;
     BusGraph graph_;
     std::unique_ptr<Router> router_;
+    std::unordered_map<std::string, StopVertexIds> stops_vertex_ids_;
     std::vector<VertexInfo> vertices_info_;
     std::vector<EdgeInfo> edges_info_;
 };
-
-#endif /* __TRANSPORT_ROUTER_H__ */

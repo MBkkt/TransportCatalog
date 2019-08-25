@@ -1,11 +1,12 @@
+#pragma GCC optimize("Ofast")
+
 #include "utils.h"
 
 #include <cctype>
 
-
 using namespace std;
 
-string_view strip(string_view line) {
+string_view Strip(string_view line) {
     while (!line.empty() && isspace(line.front())) {
         line.remove_prefix(1);
     }
