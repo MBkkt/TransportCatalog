@@ -2,6 +2,7 @@
 
 #include "descriptions.h"
 #include "json.h"
+#include "map_renderer.h"
 #include "svg.h"
 #include "transport_router.h"
 #include "utils.h"
@@ -46,6 +47,8 @@ class TransportCatalog {
 
     std::string RenderMap() const;
 
+    std::string RenderRoute(const TransportRouter::RouteInfo &route) const;
+
  private:
     static int ComputeRoadRouteLength(
         const std::vector<std::string> &stops,
@@ -57,14 +60,11 @@ class TransportCatalog {
         const Descriptions::StopsDict &stops_dict
     );
 
-    static Svg::Document BuildMap(
-        const Descriptions::StopsDict &stops_dict,
-        const Descriptions::BusesDict &buses_dict,
-        const Json::Dict &render_settings_json
-    );
+    Svg::Document BuildRouteMap(const TransportRouter::RouteInfo &route) const;
 
     std::unordered_map<std::string, Stop> stops_;
     std::unordered_map<std::string, Bus> buses_;
     std::unique_ptr<TransportRouter> router_;
+    std::unique_ptr<MapRenderer> map_renderer_;
     Svg::Document map_;
 };

@@ -25,6 +25,8 @@ class TransportRouter {
         struct BusItem {
             std::string bus_name;
             double time;
+            size_t start_stop_idx;
+            size_t finish_stop_idx;
             size_t span_count;
         };
         struct WaitItem {
@@ -61,7 +63,8 @@ class TransportRouter {
 
     struct BusEdgeInfo {
         std::string bus_name;
-        size_t span_count;
+        size_t start_stop_idx;
+        size_t finish_stop_idx;
     };
     struct WaitEdgeInfo {
     };
