@@ -66,18 +66,24 @@ RenderSettings ParseRenderSettings(const Json::Dict &json) {
 }
 
 static map<string, Svg::Point> ComputeStopsCoords(const Descriptions::StopsDict &stops_dict,
+                                                  const Descriptions::BusesDict &buses_dict,
                                                   const RenderSettings &render_settings) {
-    vector<Sphere::Stop> stops;
+    unordered_map<string, Sphere::Stop> stops;
     stops.reserve(stops_dict.size());
     for (const auto&[stop_name, stop_ptr] : stops_dict) {
-        stops.push_back({stop_name, stop_ptr->position, {}});
-        for (auto&[neighbour, _]: stop_ptr->distances) {
-            stops.back().neighbours.insert(neighbour);
+        stops[stop_name] = {stop_name, stop_ptr->position, {}};
+    }
+    for (auto&[bus_name, bus_ptr]: buses_dict) {
+        for (auto it = begin(bus_ptr->stops) + 1; it != end(bus_ptr->stops); ++it) {
+            stops[*it].neighbours.insert(*(it - 1));
         }
     }
-
+    vector<Sphere::Stop> v_stops;
+    for (auto&&[_, stop]: stops) {
+        v_stops.push_back(stop);
+    }
     const Sphere::Projector projector(
-        move(stops), render_settings.max_width, render_settings.max_height, render_settings.padding
+        move(v_stops), render_settings.max_width, render_settings.max_height, render_settings.padding
     );
 
     map<string, Svg::Point> stops_coords;
@@ -104,7 +110,7 @@ MapRenderer::MapRenderer(const Descriptions::StopsDict &stops_dict,
                          const Json::Dict &render_settings_json)
     : render_settings_(ParseRenderSettings(render_settings_json)),
       buses_dict_(buses_dict),
-      stops_coords_(ComputeStopsCoords(stops_dict, render_settings_)),
+      stops_coords_(ComputeStopsCoords(stops_dict, buses_dict, render_settings_)),
       bus_colors_(ChooseBusColors(buses_dict, render_settings_)) {
 }
 
