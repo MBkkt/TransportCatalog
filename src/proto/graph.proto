@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package GraphProto;
+
+message Edge {
+    uint32 from = 1;
+    uint32 to = 2;
+    double weight = 3;
+}
+
+message IncidenceList {
+    repeated uint32 edge_ids = 1;
+}
+
+message DirectedWeightedGraph {
+    repeated Edge edges = 1;
+    repeated IncidenceList incidence_lists = 2;
+}
+
+message RouteInternalData {
+    bool exists = 1;
+    double weight = 2;
+    bool has_prev_edge = 3;
+    uint32 prev_edge = 4;
+}
+
+message RoutesInternalDataByTarget {
+    repeated RouteInternalData targets_data = 1;
+}
+
+message Router {
+    repeated RoutesInternalDataByTarget sources_data = 1;
+}

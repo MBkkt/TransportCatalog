@@ -50,7 +50,7 @@ class TransportRouter {
     TransportRouter() = default;
 
     struct RoutingSettings {
-        int bus_wait_time;  // in minutes
+        int bus_wait_time;    // in minutes
         double bus_velocity;  // km/h
     };
 

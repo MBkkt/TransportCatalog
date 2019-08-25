@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package SvgProto;
+
+message Rgba {
+    uint32 red = 1;
+    uint32 green = 2;
+    uint32 blue = 3;
+    bool has_opacity = 4;
+    double opacity = 5;
+}
+
+message Color {
+    oneof data {
+        bool is_none = 1;
+        string name = 2;
+        Rgba rgba = 3;
+    }
+}
+
+message Point {
+    double x = 1;
+    double y = 2;
+}

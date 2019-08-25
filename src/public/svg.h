@@ -42,7 +42,7 @@ class CopyableObject : public Object {
  public:
     std::unique_ptr<Object> Copy() const override;
 
-    virtual ~CopyableObject() = default;
+    ~CopyableObject() override = default;
 };
 
 template<typename Owner>
