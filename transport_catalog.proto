@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package TCProto;
+
+message Stop {
+    string name = 1;
+    repeated string bus_names = 2;
+};
+
+message Bus {
+    string name = 1;
+    uint32 stop_count = 2;
+    uint32 unique_stop_count = 3;
+    uint32 road_route_length = 4;
+    double geo_route_length = 5;
+};
+
+message TransportCatalog {
+    repeated Stop stops = 1;
+    repeated Bus buses = 2;
+};
