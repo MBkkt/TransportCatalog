@@ -1,5 +1,4 @@
 #include "svg.h"
-#include "utils.h"
 
 using namespace std;
 
@@ -26,10 +25,9 @@ void RenderColor(ostream &out, Rgba rgba) {
         << "," << rgba.opacity << ")";
 }
 
-ostream &operator<<(ostream &out, const Color &color) {
+void RenderColor(ostream &out, const Color &color) {
     visit([&out](const auto &value) { RenderColor(out, value); },
           color);
-    return out;
 }
 
 Circle &Circle::SetCenter(Point point) {
@@ -43,10 +41,10 @@ Circle &Circle::SetRadius(double radius) {
 }
 
 void Circle::Render(ostream &out) const {
-    out << "<circle "
-        << "cx=\"" << center_.x << "\" "
-        << "cy=\"" << center_.y << "\" "
-        << "r=\"" << radius_ << "\" ";
+    out << "<circle ";
+    out << "cx=\"" << center_.x << "\" ";
+    out << "cy=\"" << center_.y << "\" ";
+    out << "r=\"" << radius_ << "\" ";
     PathProps::RenderAttrs(out);
     out << "/>";
 }
@@ -57,10 +55,10 @@ Polyline &Polyline::AddPoint(Point point) {
 }
 
 void Polyline::Render(ostream &out) const {
-    out << "<polyline points=\"";
-    BeautyPrintHelper bph{" "};
-    for (auto &point : points_) {
-        out << bph << point.x << "," << point.y;
+    out << "<polyline ";
+    out << "points=\"";
+    for (const Point point : points_) {
+        out << point.x << "," << point.y << " ";
     }
     out << "\" ";
     PathProps::RenderAttrs(out);
@@ -98,12 +96,12 @@ Text &Text::SetData(const string &data) {
 }
 
 void Text::Render(ostream &out) const {
-    out << "<text "
-        << "x=\"" << point_.x << "\" "
-        << "y=\"" << point_.y << "\" "
-        << "dx=\"" << offset_.x << "\" "
-        << "dy=\"" << offset_.y << "\" "
-        << "font-size=\"" << font_size_ << "\" ";
+    out << "<text ";
+    out << "x=\"" << point_.x << "\" ";
+    out << "y=\"" << point_.y << "\" ";
+    out << "dx=\"" << offset_.x << "\" ";
+    out << "dy=\"" << offset_.y << "\" ";
+    out << "font-size=\"" << font_size_ << "\" ";
     if (font_family_) {
         out << "font-family=\"" << *font_family_ << "\" ";
     }
@@ -111,12 +109,15 @@ void Text::Render(ostream &out) const {
         out << "font-weight=\"" << *font_weight_ << "\" ";
     }
     PathProps::RenderAttrs(out);
-    out << ">" << data_ << "</text>";
+    out << ">";
+    out << data_;
+    out << "</text>";
 }
 
 void Document::Render(ostream &out) const {
-    out << R"(<?xml version="1.0" encoding="UTF-8" ?><svg xmlns="http://www.w3.org/2000/svg" version="1.1">)";
-    for (auto &object_ptr : objects_) {
+    out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>";
+    out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">";
+    for (const auto &object_ptr : objects_) {
         object_ptr->Render(out);
     }
     out << "</svg>";

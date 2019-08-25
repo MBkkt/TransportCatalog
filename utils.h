@@ -45,19 +45,3 @@ const V *GetValuePointer(const std::unordered_map<K, V> &map, const K &key) {
 std::string_view Strip(std::string_view line);
 
 bool IsZero(double x);
-
-struct BeautyPrintHelper {
-    BeautyPrintHelper(std::string delimiter) : delimiter_(std::move(delimiter)) {}
-
-    std::string delimiter_;
-    bool first_{true};
-};
-
-inline std::ostream &operator<<(std::ostream &output, BeautyPrintHelper &bph) {
-    if (bph.first_) {
-        bph.first_ = false;
-    } else {
-        output << bph.delimiter_;
-    }
-    return output;
-}

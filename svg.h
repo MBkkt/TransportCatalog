@@ -28,8 +28,6 @@ struct Rgba : Rgb {
 using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
 const Color NoneColor{};
 
-std::ostream &operator<<(std::ostream &out, const Color &color);
-
 class Object {
  public:
     virtual void Render(std::ostream &out) const = 0;
@@ -160,9 +158,13 @@ Owner &PathProps<Owner>::SetStrokeLineJoin(const std::string &value) {
 
 template<typename Owner>
 void PathProps<Owner>::RenderAttrs(std::ostream &out) const {
-    out << "fill=\"" << fill_color_ << "\" "
-        << "stroke=\"" << stroke_color_ << "\" "
-        << "stroke-width=\"" << stroke_width_ << "\" ";
+    out << "fill=\"";
+    RenderColor(out, fill_color_);
+    out << "\" ";
+    out << "stroke=\"";
+    RenderColor(out, stroke_color_);
+    out << "\" ";
+    out << "stroke-width=\"" << stroke_width_ << "\" ";
     if (stroke_line_cap_) {
         out << "stroke-linecap=\"" << *stroke_line_cap_ << "\" ";
     }
@@ -170,7 +172,6 @@ void PathProps<Owner>::RenderAttrs(std::ostream &out) const {
         out << "stroke-linejoin=\"" << *stroke_line_join_ << "\" ";
     }
 }
-
 
 template<typename ObjectType>
 void Document::Add(ObjectType object) {
