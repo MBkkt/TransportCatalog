@@ -47,8 +47,8 @@ TransportCatalog::TransportCatalog(
 
     router_ = make_unique<TransportRouter>(stops_dict, buses_dict, routing_settings_json);
 
-    //map_renderer_ = make_unique<MapRenderer>(stops_dict, buses_dict, render_settings_json);
-    //map_ = map_renderer_->Render();
+    map_renderer_ = make_unique<MapRenderer>(stops_dict, buses_dict, render_settings_json);
+    map_ = map_renderer_->Render();
 }
 
 const TransportCatalog::Stop *TransportCatalog::GetStop(const string &name) const {
@@ -107,7 +107,7 @@ string TransportCatalog::Serialize() const {
     TCProto::TransportCatalog db_proto;
 
     for (const auto&[name, stop] : stops_) {
-        TCProto::Stop &stop_proto = *db_proto.add_stops();
+        TCProto::StopResponse &stop_proto = *db_proto.add_stops();
         stop_proto.set_name(name);
         for (const string &bus_name : stop.bus_names) {
             stop_proto.add_bus_names(bus_name);
@@ -115,14 +115,17 @@ string TransportCatalog::Serialize() const {
     }
 
     for (const auto&[name, bus] : buses_) {
-        TCProto::Bus &bus_proto = *db_proto.add_buses();
+        TCProto::BusResponse &bus_proto = *db_proto.add_buses();
         bus_proto.set_name(name);
         bus_proto.set_stop_count(bus.stop_count);
         bus_proto.set_unique_stop_count(bus.unique_stop_count);
         bus_proto.set_road_route_length(bus.road_route_length);
         bus_proto.set_geo_route_length(bus.geo_route_length);
     }
-    router_->Serialize(db_proto.mutable_transport_router());
+
+    router_->Serialize(*db_proto.mutable_router());
+    map_renderer_->Serialize(*db_proto.mutable_renderer());
+
     return db_proto.SerializeAsString();
 }
 
@@ -132,20 +135,24 @@ TransportCatalog TransportCatalog::Deserialize(const string &data) {
 
     TransportCatalog catalog;
 
-    for (const TCProto::Stop &stop_proto : proto.stops()) {
+    for (const TCProto::StopResponse &stop_proto : proto.stops()) {
         Stop &stop = catalog.stops_[stop_proto.name()];
         for (const string &bus_name : stop_proto.bus_names()) {
             stop.bus_names.insert(bus_name);
         }
     }
 
-    for (const TCProto::Bus &bus_proto : proto.buses()) {
+    for (const TCProto::BusResponse &bus_proto : proto.buses()) {
         Bus &bus = catalog.buses_[bus_proto.name()];
         bus.stop_count = bus_proto.stop_count();
         bus.unique_stop_count = bus_proto.unique_stop_count();
         bus.road_route_length = bus_proto.road_route_length();
         bus.geo_route_length = bus_proto.geo_route_length();
     }
-    catalog.router_ = TransportRouter::Deserialize(proto.mutable_transport_router());
+
+    catalog.router_ = TransportRouter::Deserialize(proto.router());
+    catalog.map_renderer_ = MapRenderer::Deserialize(proto.renderer());
+    catalog.map_ = catalog.map_renderer_->Render();
+
     return catalog;
 }

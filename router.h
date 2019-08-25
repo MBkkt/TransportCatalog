@@ -1,14 +1,17 @@
 #pragma once
 
 #include "graph.h"
+#include "graph.pb.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <unordered_map>
 #include <utility>
+#include <type_traits>
 #include <vector>
 
 namespace Graph {
@@ -19,11 +22,11 @@ class Router {
     using Graph = DirectedWeightedGraph<Weight>;
 
  public:
-    Router(Graph *graph);
+    Router(const Graph &graph);
 
-    Router(Graph *graph, volatile int i) {
-        graph_ = graph;
-    }
+    void Serialize(GraphProto::Router &proto);
+
+    static std::unique_ptr<Router> Deserialize(const GraphProto::Router &proto, const Graph &graph);
 
     using RouteId = uint64_t;
 
@@ -39,12 +42,15 @@ class Router {
 
     void ReleaseRoute(RouteId route_id);
 
+ private:
+    Router(const Graph &graph, const GraphProto::Router &proto);
+
+    const Graph &graph_;
+
     struct RouteInternalData {
         Weight weight;
         std::optional<EdgeId> prev_edge;
     };
- private:
-    Graph *graph_ = nullptr;
     using RoutesInternalData = std::vector<std::vector<std::optional<RouteInternalData>>>;
 
     using ExpandedRoute = std::vector<EdgeId>;
@@ -92,22 +98,67 @@ class Router {
         }
     }
 
- public:
     RoutesInternalData routes_internal_data_;
 };
 
 
 template<typename Weight>
-Router<Weight>::Router(Graph *graph)
+Router<Weight>::Router(const Graph &graph)
     : graph_(graph),
-      routes_internal_data_(graph->GetVertexCount(),
-                            std::vector<std::optional<RouteInternalData>>(graph->GetVertexCount())) {
-    InitializeRoutesInternalData(*graph);
+      routes_internal_data_(graph.GetVertexCount(),
+                            std::vector<std::optional<RouteInternalData>>(graph.GetVertexCount())) {
+    InitializeRoutesInternalData(graph);
 
-    const size_t vertex_count = graph->GetVertexCount();
+    const size_t vertex_count = graph.GetVertexCount();
     for (VertexId vertex_through = 0; vertex_through < vertex_count; ++vertex_through) {
         RelaxRoutesInternalDataThroughVertex(vertex_count, vertex_through);
     }
+}
+
+template<typename Weight>
+void Router<Weight>::Serialize(GraphProto::Router &proto) {
+    static_assert(std::is_same_v<Weight, double>, "Serialization is implemented only for double weights");
+
+    for (const auto &source_data : routes_internal_data_) {
+        auto &source_data_proto = *proto.add_sources_data();
+        for (const auto &route_data : source_data) {
+            auto &route_data_proto = *source_data_proto.add_targets_data();
+            if (route_data) {
+                route_data_proto.set_exists(true);
+                route_data_proto.set_weight(route_data->weight);
+                if (route_data->prev_edge) {
+                    route_data_proto.set_has_prev_edge(true);
+                    route_data_proto.set_prev_edge(*route_data->prev_edge);
+                }
+            }
+        }
+    }
+}
+
+template<typename Weight>
+Router<Weight>::Router(const Graph &graph, const GraphProto::Router &proto)
+    : graph_(graph) {
+    static_assert(std::is_same_v<Weight, double>, "Serialization is implemented only for double weights");
+
+    routes_internal_data_.reserve(proto.sources_data_size());
+    for (const auto &source_data_proto : proto.sources_data()) {
+        auto &source_data = routes_internal_data_.emplace_back();
+        source_data.reserve(source_data_proto.targets_data_size());
+        for (const auto &route_data_proto : source_data_proto.targets_data()) {
+            auto &route_data = source_data.emplace_back();
+            if (route_data_proto.exists()) {
+                route_data = RouteInternalData{route_data_proto.weight(), std::nullopt};
+                if (route_data_proto.has_prev_edge()) {
+                    route_data->prev_edge = route_data_proto.prev_edge();
+                }
+            }
+        }
+    }
+}
+
+template<typename Weight>
+std::unique_ptr<Router<Weight>> Router<Weight>::Deserialize(const GraphProto::Router &proto, const Graph &graph) {
+    return std::unique_ptr<Router>(new Router(graph, proto));  // ctor is private, so can't use make_unique
 }
 
 template<typename Weight>
@@ -120,7 +171,7 @@ std::optional<typename Router<Weight>::RouteInfo> Router<Weight>::BuildRoute(Ver
     std::vector<EdgeId> edges;
     for (std::optional<EdgeId> edge_id = route_internal_data->prev_edge;
          edge_id;
-         edge_id = routes_internal_data_[from][graph_->GetEdge(*edge_id).from]->prev_edge) {
+         edge_id = routes_internal_data_[from][graph_.GetEdge(*edge_id).from]->prev_edge) {
         edges.push_back(*edge_id);
     }
     std::reverse(std::begin(edges), std::end(edges));

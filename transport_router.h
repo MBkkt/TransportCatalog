@@ -4,7 +4,9 @@
 #include "graph.h"
 #include "json.h"
 #include "router.h"
-#include "transport_catalog.pb.h"
+
+#include "transport_router.pb.h"
+
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -19,10 +21,9 @@ class TransportRouter {
                     const Descriptions::BusesDict &buses_dict,
                     const Json::Dict &routing_settings_json);
 
-    void Serialize(TCProto::TransportRouter *tr) const;
+    void Serialize(TCProto::TransportRouter &proto) const;
 
-    static std::unique_ptr<TransportRouter> Deserialize(TCProto::TransportRouter *tr);
-
+    static std::unique_ptr<TransportRouter> Deserialize(const TCProto::TransportRouter &proto);
 
     struct RouteInfo {
         double total_time;
@@ -45,9 +46,9 @@ class TransportRouter {
 
     std::optional<RouteInfo> FindRoute(const std::string &stop_from, const std::string &stop_to) const;
 
+ private:
     TransportRouter() = default;
 
- private:
     struct RoutingSettings {
         int bus_wait_time;  // in minutes
         double bus_velocity;  // km/h

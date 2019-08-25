@@ -62,6 +62,33 @@ Bus Bus::ParseFrom(const Json::Dict &attrs) {
     }
 }
 
+void Bus::Serialize(TCProto::BusDescription &proto) const {
+    proto.set_name(name);
+    for (const string &stop : stops) {
+        proto.add_stops(stop);
+    }
+    for (const string &stop : endpoints) {
+        proto.add_endpoints(stop);
+    }
+}
+
+Bus Bus::Deserialize(const TCProto::BusDescription &proto) {
+    Bus bus;
+    bus.name = proto.name();
+
+    bus.stops.reserve(proto.stops_size());
+    for (const auto &stop : proto.stops()) {
+        bus.stops.push_back(stop);
+    }
+
+    bus.endpoints.reserve(proto.endpoints_size());
+    for (const auto &stop : proto.endpoints()) {
+        bus.endpoints.push_back(stop);
+    }
+
+    return bus;
+}
+
 vector<InputQuery> ReadDescriptions(const Json::Array &nodes) {
     vector<InputQuery> result;
     result.reserve(nodes.size());

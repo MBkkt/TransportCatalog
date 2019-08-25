@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(Navigator)
+project(TransportCatalog)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -8,7 +8,7 @@ include_directories(${Protobuf_INCLUDE_DIRS}) # Добавляем в include pa
 include_directories(${CMAKE_CURRENT_BINARY_DIR}) # В ${CMAKE_CURRENT_BINARY_DIR} будут файлы, сгенерированные компилятором protoс, путь к ним надо добавить в include path
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS transport_catalog.proto) # Здесь надо перечислить все ваши .proto-файлы
-add_executable(main
+add_executable(transport_catalog
         main.cpp
         descriptions.cpp
         json.cpp
@@ -21,4 +21,4 @@ add_executable(main
         map_renderer.cpp
         ${PROTO_SRCS}
         ${PROTO_HDRS}) # Здесь надо перечислить все ваши .cpp-файлы, в том числе и сгенерированные protoc'ом
-target_link_libraries(main ${Protobuf_LIBRARIES}) # компонуем наш исполняемый файл с библиотекой libprotobuf
+target_link_libraries(transport_catalog ${Protobuf_LIBRARIES}) # компонуем наш исполняемый файл с библиотекой libprotobuf

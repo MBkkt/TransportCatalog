@@ -1,5 +1,6 @@
 #include "map_renderer.h"
 #include "sphere.h"
+#include "svg_serialize.h"
 #include <algorithm>
 #include <iterator>
 
@@ -314,6 +315,100 @@ MapRenderer::MapRenderer(const Descriptions::StopsDict &stops_dict,
       stops_coords_(ComputeStopsCoordsByGrid(stops_dict, buses_dict, render_settings_)),
       bus_colors_(ChooseBusColors(buses_dict, render_settings_)),
       buses_dict_(CopyBusesDict(buses_dict)) {
+}
+
+void RenderSettings::Serialize(TCProto::RenderSettings &proto) const {
+    proto.set_max_width(max_width);
+    proto.set_max_height(max_height);
+    proto.set_padding(padding);
+    proto.set_outer_margin(outer_margin);
+
+    for (const Svg::Color &color : palette) {
+        Svg::SerializeColor(color, *proto.add_palette());
+    }
+
+    proto.set_line_width(line_width);
+    SerializeColor(underlayer_color, *proto.mutable_underlayer_color());
+    proto.set_underlayer_width(underlayer_width);
+    proto.set_stop_radius(stop_radius);
+    Svg::SerializePoint(bus_label_offset, *proto.mutable_bus_label_offset());
+    proto.set_bus_label_font_size(bus_label_font_size);
+    Svg::SerializePoint(stop_label_offset, *proto.mutable_stop_label_offset());
+    proto.set_stop_label_font_size(stop_label_font_size);
+
+    for (const string &layer : layers) {
+        proto.add_layers(layer);
+    }
+}
+
+RenderSettings RenderSettings::Deserialize(const TCProto::RenderSettings &proto) {
+    RenderSettings settings;
+    settings.max_width = proto.max_width();
+    settings.max_height = proto.max_height();
+    settings.padding = proto.padding();
+    settings.outer_margin = proto.outer_margin();
+
+    settings.palette.reserve(proto.palette_size());
+    for (const auto &color : proto.palette()) {
+        settings.palette.push_back(Svg::DeserializeColor(color));
+    }
+
+    settings.line_width = proto.line_width();
+    settings.underlayer_color = Svg::DeserializeColor(proto.underlayer_color());
+    settings.underlayer_width = proto.underlayer_width();
+    settings.stop_radius = proto.stop_radius();
+    settings.bus_label_offset = Svg::DeserializePoint(proto.bus_label_offset());
+    settings.bus_label_font_size = proto.bus_label_font_size();
+    settings.stop_label_offset = Svg::DeserializePoint(proto.stop_label_offset());
+    settings.stop_label_font_size = proto.stop_label_font_size();
+
+    settings.layers.reserve(proto.layers_size());
+    for (const auto &layer : proto.layers()) {
+        settings.layers.push_back(layer);
+    }
+
+    return settings;
+}
+
+void MapRenderer::Serialize(TCProto::MapRenderer &proto) {
+    render_settings_.Serialize(*proto.mutable_render_settings());
+
+    for (const auto&[name, point] : stops_coords_) {
+        auto &stop_coords_proto = *proto.add_stops_coords();
+        stop_coords_proto.set_name(name);
+        Svg::SerializePoint(point, *stop_coords_proto.mutable_point());
+    }
+
+    for (const auto&[name, color] : bus_colors_) {
+        auto &bus_color_proto = *proto.add_bus_colors();
+        bus_color_proto.set_name(name);
+        Svg::SerializeColor(color, *bus_color_proto.mutable_color());
+    }
+
+    for (const auto&[_, bus] : buses_dict_) {
+        bus.Serialize(*proto.add_bus_descriptions());
+    }
+}
+
+std::unique_ptr<MapRenderer> MapRenderer::Deserialize(const TCProto::MapRenderer &proto) {
+    std::unique_ptr<MapRenderer> renderer_holder(new MapRenderer);
+    auto &renderer = *renderer_holder;
+
+    renderer.render_settings_ = RenderSettings::Deserialize(proto.render_settings());
+
+    for (const auto &stop_coords_proto : proto.stops_coords()) {
+        renderer.stops_coords_.emplace(stop_coords_proto.name(), Svg::DeserializePoint(stop_coords_proto.point()));
+    }
+
+    for (const auto &bus_color_proto : proto.bus_colors()) {
+        renderer.bus_colors_.emplace(bus_color_proto.name(), Svg::DeserializeColor(bus_color_proto.color()));
+    }
+
+    for (const auto &bus_proto : proto.bus_descriptions()) {
+        renderer.buses_dict_.emplace(bus_proto.name(), Descriptions::Bus::Deserialize(bus_proto));
+    }
+
+    return renderer_holder;
 }
 
 using RouteBusItem = TransportRouter::RouteInfo::BusItem;

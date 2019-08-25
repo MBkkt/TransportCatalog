@@ -3,6 +3,8 @@
 #include "json.h"
 #include "sphere.h"
 
+#include "descriptions.pb.h"
+
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -28,6 +30,10 @@ struct Bus {
     std::vector<std::string> endpoints;
 
     static Bus ParseFrom(const Json::Dict &attrs);
+
+    void Serialize(TCProto::BusDescription &proto) const;
+
+    static Bus Deserialize(const TCProto::BusDescription &proto);
 };
 
 using InputQuery = std::variant<Stop, Bus>;

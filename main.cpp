@@ -21,7 +21,7 @@ string ReadFileData(const string &file_name) {
 
 int main(int argc, const char *argv[]) {
     if (argc != 2) {
-        cerr << "Usage: transport_catalog_part_o [make_base|process_requests]\n";
+        cerr << "Usage: transport_catalog [make_base|process_requests]\n";
         return 5;
     }
 
@@ -30,7 +30,19 @@ int main(int argc, const char *argv[]) {
     const auto input_doc = Json::Load(cin);
     const auto &input_map = input_doc.GetRoot().AsMap();
 
-    if (mode == "make_base") {
+    if (mode == "process_requests") {
+
+        const string &file_name = input_map.at("serialization_settings").AsMap().at("file").AsString();
+        const auto db = TransportCatalog::Deserialize(ReadFileData(file_name));
+
+        Json::PrintValue(
+            Requests::ProcessAll(db, input_map.at("stat_requests").AsArray()),
+            cout
+        );
+        cout << endl;
+
+    } else if (mode == "make_base") {
+
         const TransportCatalog db(
             Descriptions::ReadDescriptions(input_map.at("base_requests").AsArray()),
             input_map.at("routing_settings").AsMap(),
@@ -41,28 +53,6 @@ int main(int argc, const char *argv[]) {
         ofstream file(file_name);
         file << db.Serialize();
 
-    } else if (mode == "process_requests") {
-        const string &file_name = input_map.at("serialization_settings").AsMap().at("file").AsString();
-        const auto db = TransportCatalog::Deserialize(ReadFileData(file_name));
-
-        Json::PrintValue(
-            Requests::ProcessAll(db, input_map.at("stat_requests").AsArray()),
-            cout
-        );
-        cout << endl;
-
-    } else if (mode == "online") {
-        const TransportCatalog db(
-            Descriptions::ReadDescriptions(input_map.at("base_requests").AsArray()),
-            input_map.at("routing_settings").AsMap(),
-            input_map.at("render_settings").AsMap()
-        );
-
-        Json::PrintValue(
-            Requests::ProcessAll(db, input_map.at("stat_requests").AsArray()),
-            cout
-        );
-        cout << endl;
     }
 
     return 0;

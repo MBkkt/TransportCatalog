@@ -5,6 +5,8 @@
 #include "svg.h"
 #include "transport_router.h"
 
+#include "map_renderer.pb.h"
+
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -26,6 +28,10 @@ struct RenderSettings {
     Svg::Point stop_label_offset;
     int stop_label_font_size;
     std::vector<std::string> layers;
+
+    void Serialize(TCProto::RenderSettings &proto) const;
+
+    static RenderSettings Deserialize(const TCProto::RenderSettings &proto);
 };
 
 class MapRenderer {
@@ -34,11 +40,17 @@ class MapRenderer {
                 const Descriptions::BusesDict &buses_dict,
                 const Json::Dict &render_settings_json);
 
+    void Serialize(TCProto::MapRenderer &proto);
+
+    static std::unique_ptr<MapRenderer> Deserialize(const TCProto::MapRenderer &proto);
+
     Svg::Document Render() const;
 
     Svg::Document RenderRoute(Svg::Document whole_map, const TransportRouter::RouteInfo &route) const;
 
  private:
+    MapRenderer() = default;
+
     RenderSettings render_settings_;
     std::map<std::string, Svg::Point> stops_coords_;
     std::unordered_map<std::string, Svg::Color> bus_colors_;

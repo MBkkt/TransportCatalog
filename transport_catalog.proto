@@ -1,13 +1,15 @@
 syntax = "proto3";
+import "map_renderer.proto";
+import "transport_router.proto";
 
 package TCProto;
 
-message Stop {
+message StopResponse {
     string name = 1;
     repeated string bus_names = 2;
 };
 
-message Bus {
+message BusResponse {
     string name = 1;
     uint32 stop_count = 2;
     uint32 unique_stop_count = 3;
@@ -15,81 +17,9 @@ message Bus {
     double geo_route_length = 5;
 };
 
-message RoutingSettings {
-    int32 bus_wait_time = 1;
-    double bus_velocity = 2;
-};
-
-//BusGraph//
-message Edge {
-    uint32 from = 1;
-    uint32 to = 2;
-    double weight = 3;
-};
-
-message IncidenceList {
-    repeated uint32 EdgeIds = 1;
-};
-
-message BusGraph {
-    repeated Edge edges = 1;
-    repeated IncidenceList incidence_lists = 2;
-};
-//********//
-//Router//
-enum DataType {
-    data_empty = 0;
-    data_half = 1;
-    data_all = 2;
-};
-message RouteInternalData {
-    DataType type = 1;
-    double weight = 2;
-    uint32 prev_edge = 3;
-};
-message RouteInternalDataHelper {
-    repeated RouteInternalData data = 1;
-};
-
-message Router {
-    repeated RouteInternalDataHelper helper = 1;
-};
-//******//
-message StopVertexId {
-    string stop_name = 1;
-    uint32 in = 2;
-    uint32 out = 3;
-};
-message StopsVertexId {
-    repeated StopVertexId item = 1;
-};
-
-enum Type {
-    BusInfo = 0;
-    WaitInfo = 1;
-};
-message EdgeInfo {
-    Type type = 1;
-    string bus_name = 2;
-    uint32 start_stop_idx = 3;
-    uint32 finish_stop_idx = 4;
-};
-
-message TransportRouter {
-    RoutingSettings routing_settings = 1;
-    BusGraph graph = 2;
-    Router router = 3;
-    StopsVertexId stops_vertex_id = 4;
-    repeated string vertices_info_stop_name = 5;
-    repeated EdgeInfo edges_info = 6;
-};
-/////////////////////////////////////////////////////////////
-//message MapRender {
-//
-//}
 message TransportCatalog {
-    repeated Stop stops = 1;
-    repeated Bus buses = 2;
-    TransportRouter transport_router = 3;
-    //MapRender map_render = 4;
+    repeated StopResponse stops = 1;
+    repeated BusResponse buses = 2;
+    TransportRouter router = 3;
+    MapRenderer renderer = 4;
 };
