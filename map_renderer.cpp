@@ -65,6 +65,7 @@ RenderSettings ParseRenderSettings(const Json::Dict &json) {
     return result;
 }
 
+
 static map<string, Svg::Point> ComputeStopsCoords(const Descriptions::StopsDict &stops_dict,
                                                   const Descriptions::BusesDict &buses_dict,
                                                   const RenderSettings &render_settings) {
@@ -74,12 +75,36 @@ static map<string, Svg::Point> ComputeStopsCoords(const Descriptions::StopsDict 
         stops[stop_name] = {stop_name, stop_ptr->position, {}};
     }
     for (auto&[bus_name, bus_ptr]: buses_dict) {
+        for (const auto &stop_name: bus_ptr->endpoints) {
+            stops[stop_name].is_reference = true;
+        }
         for (auto it = begin(bus_ptr->stops) + 1; it != end(bus_ptr->stops); ++it) {
             stops[*it].neighbours.insert(*(it - 1));
+            if (stops[*it].is_reference) {
+                continue;
+            }
+            ++stops[*it].buses[bus_name];
+            stops[*it].is_reference = stops[*it].buses.size() > 1 || stops[*it].buses[bus_name] > 2;
         }
     }
+
+    for (auto&[bus_name, bus_ptr]: buses_dict) {
+        auto bt = begin(bus_ptr->stops);
+        for (auto it = begin(bus_ptr->stops) + 1; it != end(bus_ptr->stops); ++it) {
+            if (!stops[*it].is_reference) {
+                continue;
+            }
+            const Sphere::GeoProjector gp{stops[*bt].position, stops[*it].position, it - bt};
+            for (; ++bt != it;) {
+                gp(stops[*bt].position);
+            }
+        }
+    }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
     vector<Sphere::Stop> v_stops;
-    for (auto&&[_, stop]: stops) {
+    for (const auto&[_, stop]: stops) {
         v_stops.push_back(stop);
     }
     const Sphere::Projector projector(
@@ -87,8 +112,8 @@ static map<string, Svg::Point> ComputeStopsCoords(const Descriptions::StopsDict 
     );
 
     map<string, Svg::Point> stops_coords;
-    for (const auto&[stop_name, stop_ptr] : stops_dict) {
-        stops_coords[stop_name] = projector(stop_ptr->position);
+    for (const auto&[stop_name, _] : stops_dict) {
+        stops_coords[stop_name] = projector(stops[stop_name].position);
     }
 
     return stops_coords;

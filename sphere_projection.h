@@ -16,7 +16,25 @@ struct Stop {
     std::string name;
     Point position;
     std::unordered_set<std::string> neighbours;
+    std::unordered_map<std::string, int> buses;
+    bool is_reference = false;
 };
+
+class GeoProjector {
+ public:
+    GeoProjector(Point start, Point end, int64_t diff);
+
+    void operator()(Point &point) const;
+
+ private:
+    double lon_step_ = 0.0;
+    double lat_step_ = 0.0;
+    double lat = 0.0;
+    double lon = 0.0;
+    mutable size_t count_ = 1;
+
+};
+
 
 class Projector {
  public:
