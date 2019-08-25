@@ -1,6 +1,8 @@
 #include "transport_catalog.h"
 #include "utils.h"
 
+#include "transport_catalog.pb.h"
+
 #include <algorithm>
 #include <iterator>
 #include <map>
@@ -73,11 +75,11 @@ string TransportCatalog::RenderRoute(const TransportRouter::RouteInfo &route) co
     return out.str();
 }
 
-int TransportCatalog::ComputeRoadRouteLength(
+size_t TransportCatalog::ComputeRoadRouteLength(
     const vector<string> &stops,
     const Descriptions::StopsDict &stops_dict
 ) {
-    int result = 0;
+    size_t result = 0;
     for (size_t i = 1; i < stops.size(); ++i) {
         result += Descriptions::ComputeStopsDistance(*stops_dict.at(stops[i - 1]), *stops_dict.at(stops[i]));
     }
@@ -99,4 +101,51 @@ double TransportCatalog::ComputeGeoRouteDistance(
 
 Svg::Document TransportCatalog::BuildRouteMap(const TransportRouter::RouteInfo &route) const {
     return map_renderer_->RenderRoute(map_, route);
+}
+
+string TransportCatalog::Serialize() const {
+    TCProto::TransportCatalog db_proto;
+
+    for (const auto&[name, stop] : stops_) {
+        TCProto::Stop &stop_proto = *db_proto.add_stops();
+        stop_proto.set_name(name);
+        for (const string &bus_name : stop.bus_names) {
+            stop_proto.add_bus_names(bus_name);
+        }
+    }
+
+    for (const auto&[name, bus] : buses_) {
+        TCProto::Bus &bus_proto = *db_proto.add_buses();
+        bus_proto.set_name(name);
+        bus_proto.set_stop_count(bus.stop_count);
+        bus_proto.set_unique_stop_count(bus.unique_stop_count);
+        bus_proto.set_road_route_length(bus.road_route_length);
+        bus_proto.set_geo_route_length(bus.geo_route_length);
+    }
+
+    return db_proto.SerializeAsString();
+}
+
+TransportCatalog TransportCatalog::Deserialize(const string &data) {
+    TCProto::TransportCatalog proto;
+    assert(proto.ParseFromString(data));
+
+    TransportCatalog catalog;
+
+    for (const TCProto::Stop &stop_proto : proto.stops()) {
+        Stop &stop = catalog.stops_[stop_proto.name()];
+        for (const string &bus_name : stop_proto.bus_names()) {
+            stop.bus_names.insert(bus_name);
+        }
+    }
+
+    for (const TCProto::Bus &bus_proto : proto.buses()) {
+        Bus &bus = catalog.buses_[bus_proto.name()];
+        bus.stop_count = bus_proto.stop_count();
+        bus.unique_stop_count = bus_proto.unique_stop_count();
+        bus.road_route_length = bus_proto.road_route_length();
+        bus.geo_route_length = bus_proto.geo_route_length();
+    }
+
+    return catalog;
 }

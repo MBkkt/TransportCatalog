@@ -22,7 +22,7 @@ struct Stop {
 struct Bus {
     size_t stop_count = 0;
     size_t unique_stop_count = 0;
-    int road_route_length = 0;
+    size_t road_route_length = 0;
     double geo_route_length = 0.0;
 };
 }
@@ -49,8 +49,14 @@ class TransportCatalog {
 
     std::string RenderRoute(const TransportRouter::RouteInfo &route) const;
 
+    std::string Serialize() const;
+
+    static TransportCatalog Deserialize(const std::string &data);
+
  private:
-    static int ComputeRoadRouteLength(
+    TransportCatalog() = default;
+
+    static size_t ComputeRoadRouteLength(
         const std::vector<std::string> &stops,
         const Descriptions::StopsDict &stops_dict
     );

@@ -15,12 +15,12 @@ namespace Descriptions {
 struct Stop {
     std::string name;
     Sphere::Point position;
-    std::unordered_map<std::string, int> distances;
+    std::unordered_map<std::string, size_t> distances;
 
     static Stop ParseFrom(const Json::Dict &attrs);
 };
 
-int ComputeStopsDistance(const Stop &lhs, const Stop &rhs);
+size_t ComputeStopsDistance(const Stop &lhs, const Stop &rhs);
 
 struct Bus {
     std::string name;

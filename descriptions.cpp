@@ -36,7 +36,7 @@ static vector<string> ParseStops(const Json::Array &stop_nodes, bool is_roundtri
     return stops;
 }
 
-int ComputeStopsDistance(const Stop &lhs, const Stop &rhs) {
+size_t ComputeStopsDistance(const Stop &lhs, const Stop &rhs) {
     if (auto it = lhs.distances.find(rhs.name); it != lhs.distances.end()) {
         return it->second;
     } else {
