@@ -19,7 +19,11 @@ class Router {
     using Graph = DirectedWeightedGraph<Weight>;
 
  public:
-    Router(const Graph &graph);
+    Router(Graph *graph);
+
+    Router(Graph *graph, volatile int i) {
+        graph_ = graph;
+    }
 
     using RouteId = uint64_t;
 
@@ -35,13 +39,12 @@ class Router {
 
     void ReleaseRoute(RouteId route_id);
 
- private:
-    const Graph &graph_;
-
     struct RouteInternalData {
         Weight weight;
         std::optional<EdgeId> prev_edge;
     };
+ private:
+    Graph *graph_ = nullptr;
     using RoutesInternalData = std::vector<std::vector<std::optional<RouteInternalData>>>;
 
     using ExpandedRoute = std::vector<EdgeId>;
@@ -89,18 +92,19 @@ class Router {
         }
     }
 
+ public:
     RoutesInternalData routes_internal_data_;
 };
 
 
 template<typename Weight>
-Router<Weight>::Router(const Graph &graph)
+Router<Weight>::Router(Graph *graph)
     : graph_(graph),
-      routes_internal_data_(graph.GetVertexCount(),
-                            std::vector<std::optional<RouteInternalData>>(graph.GetVertexCount())) {
-    InitializeRoutesInternalData(graph);
+      routes_internal_data_(graph->GetVertexCount(),
+                            std::vector<std::optional<RouteInternalData>>(graph->GetVertexCount())) {
+    InitializeRoutesInternalData(*graph);
 
-    const size_t vertex_count = graph.GetVertexCount();
+    const size_t vertex_count = graph->GetVertexCount();
     for (VertexId vertex_through = 0; vertex_through < vertex_count; ++vertex_through) {
         RelaxRoutesInternalDataThroughVertex(vertex_count, vertex_through);
     }
@@ -116,7 +120,7 @@ std::optional<typename Router<Weight>::RouteInfo> Router<Weight>::BuildRoute(Ver
     std::vector<EdgeId> edges;
     for (std::optional<EdgeId> edge_id = route_internal_data->prev_edge;
          edge_id;
-         edge_id = routes_internal_data_[from][graph_.GetEdge(*edge_id).from]->prev_edge) {
+         edge_id = routes_internal_data_[from][graph_->GetEdge(*edge_id).from]->prev_edge) {
         edges.push_back(*edge_id);
     }
     std::reverse(std::begin(edges), std::end(edges));

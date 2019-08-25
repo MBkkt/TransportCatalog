@@ -37,7 +37,7 @@ class DirectedWeightedGraph {
 
     IncidentEdgesRange GetIncidentEdges(VertexId vertex) const;
 
- private:
+ public:
     std::vector<Edge<Weight>> edges_;
     std::vector<IncidenceList> incidence_lists_;
 };

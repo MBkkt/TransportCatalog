@@ -4,7 +4,7 @@
 #include "graph.h"
 #include "json.h"
 #include "router.h"
-
+#include "transport_catalog.pb.h"
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -18,6 +18,11 @@ class TransportRouter {
     TransportRouter(const Descriptions::StopsDict &stops_dict,
                     const Descriptions::BusesDict &buses_dict,
                     const Json::Dict &routing_settings_json);
+
+    void Serialize(TCProto::TransportRouter *tr) const;
+
+    static std::unique_ptr<TransportRouter> Deserialize(TCProto::TransportRouter *tr);
+
 
     struct RouteInfo {
         double total_time;
@@ -39,6 +44,8 @@ class TransportRouter {
     };
 
     std::optional<RouteInfo> FindRoute(const std::string &stop_from, const std::string &stop_to) const;
+
+    TransportRouter() = default;
 
  private:
     struct RoutingSettings {
@@ -72,7 +79,7 @@ class TransportRouter {
 
     RoutingSettings routing_settings_;
     BusGraph graph_;
-    // TODO: Tell about this unique_ptr usage case
+    // TODO: Write about this unique_ptr usage case
     std::unique_ptr<Router> router_;
     std::unordered_map<std::string, StopVertexIds> stops_vertex_ids_;
     std::vector<VertexInfo> vertices_info_;

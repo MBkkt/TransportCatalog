@@ -47,8 +47,8 @@ TransportCatalog::TransportCatalog(
 
     router_ = make_unique<TransportRouter>(stops_dict, buses_dict, routing_settings_json);
 
-    map_renderer_ = make_unique<MapRenderer>(stops_dict, buses_dict, render_settings_json);
-    map_ = map_renderer_->Render();
+    //map_renderer_ = make_unique<MapRenderer>(stops_dict, buses_dict, render_settings_json);
+    //map_ = map_renderer_->Render();
 }
 
 const TransportCatalog::Stop *TransportCatalog::GetStop(const string &name) const {
@@ -122,7 +122,7 @@ string TransportCatalog::Serialize() const {
         bus_proto.set_road_route_length(bus.road_route_length);
         bus_proto.set_geo_route_length(bus.geo_route_length);
     }
-
+    router_->Serialize(db_proto.mutable_transport_router());
     return db_proto.SerializeAsString();
 }
 
@@ -146,6 +146,6 @@ TransportCatalog TransportCatalog::Deserialize(const string &data) {
         bus.road_route_length = bus_proto.road_route_length();
         bus.geo_route_length = bus_proto.geo_route_length();
     }
-
+    catalog.router_ = TransportRouter::Deserialize(proto.mutable_transport_router());
     return catalog;
 }
