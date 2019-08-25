@@ -1,5 +1,3 @@
-#pragma GCC optimize("Ofast")
-
 #include "sphere.h"
 
 using namespace std;

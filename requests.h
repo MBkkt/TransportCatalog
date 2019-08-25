@@ -33,5 +33,5 @@ struct Map {
 
 std::variant<Stop, Bus, Route, Map> Read(const Json::Dict &attrs);
 
-std::vector<Json::Node> ProcessAll(const TransportCatalog &db, const std::vector<Json::Node> &requests);
+Json::Array ProcessAll(const TransportCatalog &db, const Json::Array &requests);
 }

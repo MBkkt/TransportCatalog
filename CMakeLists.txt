@@ -12,4 +12,6 @@ add_executable(Navigator
         transport_catalog.cpp
         transport_router.cpp
         utils.cpp
-        svg.cpp)
+        svg.cpp
+        map_renderer.cpp
+        sphere_projection.cpp)

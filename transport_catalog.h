@@ -2,9 +2,9 @@
 
 #include "descriptions.h"
 #include "json.h"
+#include "svg.h"
 #include "transport_router.h"
 #include "utils.h"
-#include "svg.h"
 
 #include <optional>
 #include <set>
@@ -16,7 +16,6 @@
 namespace Responses {
 struct Stop {
     std::set<std::string> bus_names;
-    Svg::Point center;
 };
 
 struct Bus {
@@ -24,7 +23,6 @@ struct Bus {
     size_t unique_stop_count = 0;
     int road_route_length = 0;
     double geo_route_length = 0.0;
-    Svg::Polyline line;
 };
 }
 
@@ -34,9 +32,11 @@ class TransportCatalog {
     using Stop = Responses::Stop;
 
  public:
-    TransportCatalog(std::vector<Descriptions::InputQuery> data,
-                     const Json::Dict &routing_settings_json,
-                     const Json::Dict &render_settings_json);
+    TransportCatalog(
+        std::vector<Descriptions::InputQuery> data,
+        const Json::Dict &routing_settings_json,
+        const Json::Dict &render_settings_json
+    );
 
     const Stop *GetStop(const std::string &name) const;
 
@@ -47,21 +47,6 @@ class TransportCatalog {
     std::string RenderMap() const;
 
  private:
-    struct RenderSettings {
-        double width;
-        double height;
-        double padding;
-        double stop_radius;
-        double line_width;
-        double underlayer_width;
-        Svg::Point stop_label_offset;
-        std::vector<Svg::Color> color_palette;
-        Svg::Color underlayer_color;
-        uint32_t stop_label_font_size;
-
-        explicit RenderSettings(const Json::Dict &json);
-    };
-
     static int ComputeRoadRouteLength(
         const std::vector<std::string> &stops,
         const Descriptions::StopsDict &stops_dict
@@ -72,9 +57,14 @@ class TransportCatalog {
         const Descriptions::StopsDict &stops_dict
     );
 
+    static Svg::Document BuildMap(
+        const Descriptions::StopsDict &stops_dict,
+        const Descriptions::BusesDict &buses_dict,
+        const Json::Dict &render_settings_json
+    );
+
     std::unordered_map<std::string, Stop> stops_;
     std::unordered_map<std::string, Bus> buses_;
     std::unique_ptr<TransportRouter> router_;
-    RenderSettings render_settings_;
-    mutable std::string cache_;
+    Svg::Document map_;
 };

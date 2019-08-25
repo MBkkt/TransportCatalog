@@ -1,5 +1,3 @@
-#pragma GCC optimize("Ofast")
-
 #include "requests.h"
 #include "transport_router.h"
 
@@ -15,7 +13,7 @@ Json::Dict Stop::Process(const TransportCatalog &db) const {
     if (!stop) {
         dict["error_message"] = Json::Node("not found"s);
     } else {
-        vector<Json::Node> bus_nodes;
+        Json::Array bus_nodes;
         bus_nodes.reserve(stop->bus_names.size());
         for (const auto &bus_name : stop->bus_names) {
             bus_nodes.emplace_back(bus_name);
@@ -67,10 +65,10 @@ Json::Dict Route::Process(const TransportCatalog &db) const {
         dict["error_message"] = Json::Node("not found"s);
     } else {
         dict["total_time"] = Json::Node(route->total_time);
-        vector<Json::Node> items;
+        Json::Array items;
         items.reserve(route->items.size());
         for (const auto &item : route->items) {
-            items.emplace_back(visit(RouteItemResponseBuilder{}, item));
+            items.push_back(visit(RouteItemResponseBuilder{}, item));
         }
 
         dict["items"] = move(items);
@@ -80,9 +78,9 @@ Json::Dict Route::Process(const TransportCatalog &db) const {
 }
 
 Json::Dict Map::Process(const TransportCatalog &db) const {
-    Json::Dict dict;
-    dict["map"] = db.RenderMap();
-    return dict;
+    return Json::Dict{
+        {"map", Json::Node(db.RenderMap())},
+    };
 }
 
 variant<Stop, Bus, Route, Map> Read(const Json::Dict &attrs) {
@@ -98,8 +96,8 @@ variant<Stop, Bus, Route, Map> Read(const Json::Dict &attrs) {
     }
 }
 
-vector<Json::Node> ProcessAll(const TransportCatalog &db, const vector<Json::Node> &requests) {
-    vector<Json::Node> responses;
+Json::Array ProcessAll(const TransportCatalog &db, const Json::Array &requests) {
+    Json::Array responses;
     responses.reserve(requests.size());
     for (const Json::Node &request_node : requests) {
         Json::Dict dict = visit([&db](const auto &request) {
@@ -107,7 +105,7 @@ vector<Json::Node> ProcessAll(const TransportCatalog &db, const vector<Json::Nod
                                 },
                                 Requests::Read(request_node.AsMap()));
         dict["request_id"] = Json::Node(request_node.AsMap().at("id").AsInt());
-        responses.emplace_back(dict);
+        responses.push_back(Json::Node(dict));
     }
     return responses;
 }

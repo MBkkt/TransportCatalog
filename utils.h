@@ -4,7 +4,6 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
-#include "svg.h"
 
 template<typename It>
 class Range {
@@ -45,6 +44,7 @@ const V *GetValuePointer(const std::unordered_map<K, V> &map, const K &key) {
 
 std::string_view Strip(std::string_view line);
 
+bool IsZero(double x);
 
 struct BeautyPrintHelper {
     BeautyPrintHelper(std::string delimiter) : delimiter_(std::move(delimiter)) {}

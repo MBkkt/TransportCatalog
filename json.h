@@ -11,32 +11,66 @@ namespace Json {
 
 class Node;
 
+using Array = std::vector<Node>;
 using Dict = std::map<std::string, Node>;
 
-class Node : std::variant<std::vector<Node>, Dict, bool, int, double, std::string> {
+class Node : std::variant<Array, Dict, bool, int, double, std::string> {
  public:
     using variant::variant;
 
     const variant &GetBase() const { return *this; }
 
-    const auto &AsArray() const { return std::get<std::vector<Node>>(*this); }
-
-    const auto &AsMap() const { return std::get<Dict>(*this); }
-
-    bool AsBool() const { return std::get<bool>(*this); }
-
-    int AsInt() const { return std::get<int>(*this); }
-
-    double AsDouble() const {
-        return std::holds_alternative<double>(*this) ? std::get<double>(*this) : std::get<int>(*this);
+    bool IsArray() const {
+        return std::holds_alternative<Array>(*this);
     }
 
-    const auto &AsString() const { return std::get<std::string>(*this); }
+    const auto &AsArray() const {
+        return std::get<Array>(*this);
+    }
 
-    bool IsString() const { return std::holds_alternative<std::string>(*this); }
+    bool IsMap() const {
+        return std::holds_alternative<Dict>(*this);
+    }
 
-    template<typename Num>
-    Num As() const { return static_cast<Num>(std::get<int>(*this)); }
+    const auto &AsMap() const {
+        return std::get<Dict>(*this);
+    }
+
+    bool IsBool() const {
+        return std::holds_alternative<bool>(*this);
+    }
+
+    bool AsBool() const {
+        return std::get<bool>(*this);
+    }
+
+    bool IsInt() const {
+        return std::holds_alternative<int>(*this);
+    }
+
+    int AsInt() const {
+        return std::get<int>(*this);
+    }
+
+    bool IsPureDouble() const {
+        return std::holds_alternative<double>(*this);
+    }
+
+    bool IsDouble() const {
+        return IsPureDouble() || IsInt();
+    }
+
+    double AsDouble() const {
+        return IsPureDouble() ? std::get<double>(*this) : AsInt();
+    }
+
+    bool IsString() const {
+        return std::holds_alternative<std::string>(*this);
+    }
+
+    const auto &AsString() const {
+        return std::get<std::string>(*this);
+    }
 };
 
 class Document {
@@ -69,7 +103,7 @@ template<>
 void PrintValue<bool>(const bool &value, std::ostream &output);
 
 template<>
-void PrintValue<std::vector<Node>>(const std::vector<Node> &nodes, std::ostream &output);
+void PrintValue<Array>(const Array &nodes, std::ostream &output);
 
 template<>
 void PrintValue<Dict>(const Dict &dict, std::ostream &output);
@@ -77,3 +111,4 @@ void PrintValue<Dict>(const Dict &dict, std::ostream &output);
 void Print(const Document &document, std::ostream &output);
 
 }
+

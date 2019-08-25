@@ -40,10 +40,11 @@ class TransportRouter {
 
  private:
     struct RoutingSettings {
-        int bus_wait_time;    // minutes
+        int bus_wait_time;  // in minutes
         double bus_velocity;  // km/h
-        explicit RoutingSettings(const Json::Dict &json);
     };
+
+    static RoutingSettings MakeRoutingSettings(const Json::Dict &json);
 
     void FillGraphWithStops(const Descriptions::StopsDict &stops_dict);
 
@@ -68,6 +69,7 @@ class TransportRouter {
 
     RoutingSettings routing_settings_;
     BusGraph graph_;
+    // TODO: Tell about this unique_ptr usage case
     std::unique_ptr<Router> router_;
     std::unordered_map<std::string, StopVertexIds> stops_vertex_ids_;
     std::vector<VertexInfo> vertices_info_;

@@ -1,7 +1,4 @@
-#pragma GCC optimize("Ofast")
-
 #include "json.h"
-#include "utils.h"
 
 using namespace std;
 
@@ -100,8 +97,8 @@ Document Load(istream &input) {
 template<>
 void PrintValue<string>(const string &value, ostream &output) {
     output << '"';
-    for (char c: value) {
-        if (c == '\"') {
+    for (const char c : value) {
+        if (c == '"' || c == '\\') {
             output << '\\';
         }
         output << c;
@@ -115,11 +112,14 @@ void PrintValue<bool>(const bool &value, std::ostream &output) {
 }
 
 template<>
-void PrintValue<std::vector<Node>>(const std::vector<Node> &nodes, std::ostream &output) {
+void PrintValue<Array>(const Array &nodes, std::ostream &output) {
     output << '[';
-    BeautyPrintHelper bph{", "};
+    bool first = true;
     for (const Node &node : nodes) {
-        output << bph;
+        if (!first) {
+            output << ", ";
+        }
+        first = false;
         PrintNode(node, output);
     }
     output << ']';
@@ -128,9 +128,12 @@ void PrintValue<std::vector<Node>>(const std::vector<Node> &nodes, std::ostream 
 template<>
 void PrintValue<Dict>(const Dict &dict, std::ostream &output) {
     output << '{';
-    BeautyPrintHelper bph{", "};
+    bool first = true;
     for (const auto&[key, node]: dict) {
-        output << bph;
+        if (!first) {
+            output << ", ";
+        }
+        first = false;
         PrintValue(key, output);
         output << ": ";
         PrintNode(node, output);

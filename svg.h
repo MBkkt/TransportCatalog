@@ -1,16 +1,15 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <memory>
 
 namespace Svg {
 
-/**********************************************************************************************************************/
 struct Point {
     double x = 0;
     double y = 0;
@@ -22,19 +21,15 @@ struct Rgb {
     uint8_t blue;
 };
 
-struct Rgba {
-    uint8_t red;
-    uint8_t green;
-    uint8_t blue;
-    std::optional<double> alpha;
+struct Rgba : Rgb {
+    double opacity;
 };
 
-using Color = std::variant<std::monostate, std::string, Rgba>;
+using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
 const Color NoneColor{};
 
 std::ostream &operator<<(std::ostream &out, const Color &color);
 
-/**********************************************************************************************************************/
 class Object {
  public:
     virtual void Render(std::ostream &out) const = 0;
@@ -57,17 +52,17 @@ class PathProps {
 
     void RenderAttrs(std::ostream &out) const;
 
- private:
+ protected:
     Color fill_color_;
     Color stroke_color_;
     double stroke_width_ = 1.0;
     std::optional<std::string> stroke_line_cap_;
     std::optional<std::string> stroke_line_join_;
 
+ private:
     Owner &AsOwner();
 };
 
-/**********************************************************************************************************************/
 class Circle : public Object, public PathProps<Circle> {
  public:
     Circle &SetCenter(Point point);
@@ -101,6 +96,8 @@ class Text : public Object, public PathProps<Text> {
 
     Text &SetFontFamily(const std::string &value);
 
+    Text &SetFontWeight(const std::string &value);
+
     Text &SetData(const std::string &data);
 
     void Render(std::ostream &out) const override;
@@ -110,10 +107,10 @@ class Text : public Object, public PathProps<Text> {
     Point offset_;
     uint32_t font_size_ = 1;
     std::optional<std::string> font_family_;
+    std::optional<std::string> font_weight_;
     std::string data_;
 };
 
-/**********************************************************************************************************************/
 class Document : public Object {
  public:
     template<typename ObjectType>
@@ -125,7 +122,7 @@ class Document : public Object {
     std::vector<std::unique_ptr<Object>> objects_;
 };
 
-/**********************************************************************************************************************/
+
 template<typename Owner>
 Owner &PathProps<Owner>::AsOwner() {
     return static_cast<Owner &>(*this);
@@ -174,15 +171,10 @@ void PathProps<Owner>::RenderAttrs(std::ostream &out) const {
     }
 }
 
-/**********************************************************************************************************************/
+
 template<typename ObjectType>
 void Document::Add(ObjectType object) {
     objects_.push_back(std::make_unique<ObjectType>(std::move(object)));
 }
-
-/**********************************************************************************************************************/
-bool operator<(const Point &, const Point &);
-
-bool operator<(const Polyline &, const Polyline &);
 
 }

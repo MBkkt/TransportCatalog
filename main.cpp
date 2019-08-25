@@ -1,12 +1,9 @@
-#pragma GCC optimize("Ofast")
-
 #include "descriptions.h"
 #include "json.h"
 #include "requests.h"
 #include "sphere.h"
 #include "transport_catalog.h"
 #include "utils.h"
-#include "svg.h"
 
 #include <iostream>
 
