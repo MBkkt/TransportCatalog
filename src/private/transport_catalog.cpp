@@ -48,7 +48,6 @@ TransportCatalog::TransportCatalog(
     router_ = make_unique<TransportRouter>(stops_dict, buses_dict, routing_settings_json);
 
     map_renderer_ = make_unique<MapRenderer>(stops_dict, buses_dict, render_settings_json);
-    map_ = map_renderer_->Render();
 }
 
 const TransportCatalog::Stop *TransportCatalog::GetStop(const string &name) const {
@@ -65,7 +64,7 @@ optional<TransportRouter::RouteInfo> TransportCatalog::FindRoute(const string &s
 
 string TransportCatalog::RenderMap() const {
     ostringstream out;
-    map_.Render(out);
+    map_renderer_->Render().Render(out);
     return out.str();
 }
 
@@ -100,7 +99,7 @@ double TransportCatalog::ComputeGeoRouteDistance(
 }
 
 Svg::Document TransportCatalog::BuildRouteMap(const TransportRouter::RouteInfo &route) const {
-    return map_renderer_->RenderRoute(map_, route);
+    return map_renderer_->RenderRoute(map_renderer_->Render(), route);
 }
 
 string TransportCatalog::Serialize() const {
@@ -152,7 +151,6 @@ TransportCatalog TransportCatalog::Deserialize(const string &data) {
 
     catalog.router_ = TransportRouter::Deserialize(proto.router());
     catalog.map_renderer_ = MapRenderer::Deserialize(proto.renderer());
-    catalog.map_ = catalog.map_renderer_->Render();
 
     return catalog;
 }

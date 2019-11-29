@@ -44,18 +44,19 @@ class MapRenderer {
 
     static std::unique_ptr<MapRenderer> Deserialize(const TCProto::MapRenderer &proto);
 
-    Svg::Document Render() const;
+    const Svg::Document& Render() const;
 
     Svg::Document RenderRoute(Svg::Document whole_map, const TransportRouter::RouteInfo &route) const;
 
- private:
     MapRenderer() = default;
 
+ private:
     RenderSettings render_settings_;
     std::map<std::string, Svg::Point> stops_coords_;
     std::unordered_map<std::string, Svg::Color> bus_colors_;
     // TODO: move instead of copy
     std::map<std::string, Descriptions::Bus> buses_dict_;
+    mutable std::optional<Svg::Document> whole_map_;
 
     void RenderBusLabel(Svg::Document &svg, const std::string &bus_name, const std::string &stop_name) const;
 

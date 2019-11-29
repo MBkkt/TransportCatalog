@@ -612,14 +612,14 @@ const unordered_map<
     {"stop_labels", &MapRenderer::RenderRouteStopLabels},
 };
 
-Svg::Document MapRenderer::Render() const {
-    Svg::Document svg;
-
-    for (const auto &layer : render_settings_.layers) {
-        (this->*MAP_LAYER_ACTIONS.at(layer))(svg);
+const Svg::Document &MapRenderer::Render() const {
+    if (!whole_map_) {
+        whole_map_ = Svg::Document{};
+        for (const auto &layer : render_settings_.layers) {
+            (this->*MAP_LAYER_ACTIONS.at(layer))(*whole_map_);
+        }
     }
-
-    return svg;
+    return *whole_map_;
 }
 
 Svg::Document MapRenderer::RenderRoute(

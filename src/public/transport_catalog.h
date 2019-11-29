@@ -72,5 +72,4 @@ class TransportCatalog {
     std::unordered_map<std::string, Bus> buses_;
     std::unique_ptr<TransportRouter> router_;
     std::unique_ptr<MapRenderer> map_renderer_;
-    Svg::Document map_;
 };
